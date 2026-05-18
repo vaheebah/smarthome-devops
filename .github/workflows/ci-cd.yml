@@ -1,0 +1,164 @@
+name: SmartHome CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: docker.io
+  IMAGE_FRONTEND: ${{ secrets.DOCKERHUB_USERNAME }}/smarthome-frontend
+  IMAGE_BACKEND: ${{ secrets.DOCKERHUB_USERNAME }}/smarthome-backend
+
+jobs:
+  # ─────────────────────────────────────────
+  # STAGE 1: BUILD
+  # ─────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+  # ─────────────────────────────────────────
+  # STAGE 2: TEST
+  # ─────────────────────────────────────────
+  test:
+    name: Automated Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: npm test
+        env:
+          MONGO_URI: mongodb://localhost:27017/smarthome_test
+
+  # ─────────────────────────────────────────
+  # STAGE 3: DOCKER BUILD & PUSH
+  # ─────────────────────────────────────────
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.IMAGE_FRONTEND }}:latest
+            ${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
+
+      - name: Build & push backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.IMAGE_BACKEND }}:latest
+            ${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+
+  # ─────────────────────────────────────────
+  # STAGE 4: DEPLOY TO AKS
+  # ─────────────────────────────────────────
+  deploy:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Update image tags in manifests
+        run: |
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" k8s/backend-deployment.yaml
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" k8s/frontend-deployment.yaml
+          sed -i "s|DOCKERHUB_USERNAME|${{ secrets.DOCKERHUB_USERNAME }}|g" k8s/backend-deployment.yaml
+          sed -i "s|DOCKERHUB_USERNAME|${{ secrets.DOCKERHUB_USERNAME }}|g" k8s/frontend-deployment.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/mongo-deployment.yaml
+          kubectl apply -f k8s/backend-deployment.yaml
+          kubectl apply -f k8s/frontend-deployment.yaml
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/smarthome-backend -n smarthome
+          kubectl rollout status deployment/smarthome-frontend -n smarthome
+          kubectl get pods -n smarthome
+          kubectl get svc -n smarthome

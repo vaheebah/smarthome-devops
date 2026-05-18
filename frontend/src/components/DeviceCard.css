@@ -1,0 +1,204 @@
+.device-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: default;
+}
+
+.device-card:hover {
+  border-color: var(--card-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--card-color)22;
+}
+
+.device-card.on {
+  border-color: var(--card-color)55;
+}
+
+.device-card.off {
+  opacity: 0.7;
+}
+
+.card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--card-color);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.device-card.on .card-glow {
+  opacity: 1;
+  box-shadow: 0 0 12px var(--card-color);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.device-icon {
+  font-size: 1.5rem;
+  margin-right: 10px;
+}
+
+.card-type {
+  flex: 1;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: var(--card-color);
+  opacity: 0.8;
+}
+
+.delete-btn {
+  background: none;
+  color: var(--text2);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.device-card:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  color: var(--red);
+}
+
+.card-body {
+  margin-bottom: 16px;
+}
+
+.device-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.device-room {
+  font-size: 0.78rem;
+  color: var(--text2);
+}
+
+.device-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--card-color);
+  margin-top: 8px;
+  line-height: 1;
+}
+
+.device-unit {
+  font-size: 0.75rem;
+  margin-left: 3px;
+  opacity: 0.7;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.slider-toggle {
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+}
+.slider-toggle:hover { color: var(--text); }
+
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-label {
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+}
+
+.toggle-switch {
+  width: 44px;
+  height: 24px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.toggle-switch.active {
+  background: var(--card-color);
+  border-color: var(--card-color);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  display: block;
+}
+
+.toggle-switch.active .toggle-knob {
+  transform: translateX(20px);
+}
+
+/* SLIDER */
+.slider-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.value-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+}
+
+.value-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--slider-color);
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--slider-color);
+}
+
+.slider-val {
+  font-size: 0.75rem;
+  color: var(--text2);
+  min-width: 50px;
+  text-align: right;
+}
