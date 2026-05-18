@@ -217,103 +217,103 @@ az group create --name smarthome-rg --location eastus
 # Create AKS cluster (free tier - takes ~5 mins)
 az aks create \
   --resource-group smarthome-rg \
-  --name smarthome-aks \
-  --node-count 2 \
-  --node-vm-size Standard_B2s \
-  --enable-managed-identity \
-  --generate-ssh-keys
+    --name smarthome-aks \
+      --node-count 2 \
+        --node-vm-size Standard_B2s \
+          --enable-managed-identity \
+            --generate-ssh-keys
 
-# Get credentials
-az aks get-credentials --resource-group smarthome-rg --name smarthome-aks
+            # Get credentials
+            az aks get-credentials --resource-group smarthome-rg --name smarthome-aks
 
-# Verify connection (TAKE SCREENSHOT)
-kubectl get nodes
-```
+            # Verify connection (TAKE SCREENSHOT)
+            kubectl get nodes
+            ```
 
-### Step 3: Push Images to Docker Hub First
+            ### Step 3: Push Images to Docker Hub First
 
-```bash
-# Login to Docker Hub
-docker login
+            ```bash
+            # Login to Docker Hub
+            docker login
 
-# Tag and push backend
-docker build -t YOUR_DOCKERHUB/smarthome-backend:latest ./backend
-docker push YOUR_DOCKERHUB/smarthome-backend:latest
+            # Tag and push backend
+            docker build -t YOUR_DOCKERHUB/smarthome-backend:latest ./backend
+            docker push YOUR_DOCKERHUB/smarthome-backend:latest
 
-# Tag and push frontend
-docker build -t YOUR_DOCKERHUB/smarthome-frontend:latest ./frontend
-docker push YOUR_DOCKERHUB/smarthome-frontend:latest
-```
+            # Tag and push frontend
+            docker build -t YOUR_DOCKERHUB/smarthome-frontend:latest ./frontend
+            docker push YOUR_DOCKERHUB/smarthome-frontend:latest
+            ```
 
-### Step 4: Update K8s Manifests
+            ### Step 4: Update K8s Manifests
 
-Edit `k8s/backend-deployment.yaml` and `k8s/frontend-deployment.yaml`:
-- Replace `DOCKERHUB_USERNAME` with your actual Docker Hub username
-- Replace `IMAGE_TAG` with `latest`
+            Edit `k8s/backend-deployment.yaml` and `k8s/frontend-deployment.yaml`:
+            - Replace `DOCKERHUB_USERNAME` with your actual Docker Hub username
+            - Replace `IMAGE_TAG` with `latest`
 
-```bash
-# In k8s/backend-deployment.yaml, change:
-# image: DOCKERHUB_USERNAME/smarthome-backend:IMAGE_TAG
-# to:
-# image: yourusername/smarthome-backend:latest
+            ```bash
+            # In k8s/backend-deployment.yaml, change:
+            # image: DOCKERHUB_USERNAME/smarthome-backend:IMAGE_TAG
+            # to:
+            # image: yourusername/smarthome-backend:latest
 
-# Same for frontend-deployment.yaml
-```
+            # Same for frontend-deployment.yaml
+            ```
 
-### Step 5: Deploy to AKS
+            ### Step 5: Deploy to AKS
 
-```bash
-# Create namespace
-kubectl apply -f k8s/namespace.yaml
+            ```bash
+            # Create namespace
+            kubectl apply -f k8s/namespace.yaml
 
-# Deploy MongoDB
-kubectl apply -f k8s/mongo-deployment.yaml
+            # Deploy MongoDB
+            kubectl apply -f k8s/mongo-deployment.yaml
 
-# Wait for MongoDB to be ready
-kubectl wait --for=condition=available deployment/smarthome-mongo -n smarthome --timeout=120s
+            # Wait for MongoDB to be ready
+            kubectl wait --for=condition=available deployment/smarthome-mongo -n smarthome --timeout=120s
 
-# Deploy backend
-kubectl apply -f k8s/backend-deployment.yaml
+            # Deploy backend
+            kubectl apply -f k8s/backend-deployment.yaml
 
-# Deploy frontend
-kubectl apply -f k8s/frontend-deployment.yaml
+            # Deploy frontend
+            kubectl apply -f k8s/frontend-deployment.yaml
 
-# Check all pods running (TAKE SCREENSHOT - Task C2)
-kubectl get pods -n smarthome
-kubectl get svc -n smarthome
-```
+            # Check all pods running (TAKE SCREENSHOT - Task C2)
+            kubectl get pods -n smarthome
+            kubectl get svc -n smarthome
+            ```
 
-### Step 6: Get Public IP
+            ### Step 6: Get Public IP
 
-```bash
-# Wait for LoadBalancer to get external IP (~2 mins)
-kubectl get svc frontend -n smarthome --watch
+            ```bash
+            # Wait for LoadBalancer to get external IP (~2 mins)
+            kubectl get svc frontend -n smarthome --watch
 
-# Once EXTERNAL-IP shows up (not <pending>)
-# Your app is live at: http://EXTERNAL-IP
-```
+            # Once EXTERNAL-IP shows up (not <pending>)
+            # Your app is live at: http://EXTERNAL-IP
+            ```
 
-### 📸 Screenshots needed for Section C:
-1. `kubectl get nodes` — cluster created
-2. `kubectl get pods -n smarthome` — all pods in Running state
-3. `kubectl get svc -n smarthome` — services with external IP
-4. Browser showing the app live at the public IP
+            ### 📸 Screenshots needed for Section C:
+            1. `kubectl get nodes` — cluster created
+            2. `kubectl get pods -n smarthome` — all pods in Running state
+            3. `kubectl get svc -n smarthome` — services with external IP
+            4. Browser showing the app live at the public IP
 
-### Task C2 Verification Commands:
-```bash
-# All pods running
-kubectl get pods -n smarthome
+            ### Task C2 Verification Commands:
+            ```bash
+            # All pods running
+            kubectl get pods -n smarthome
 
-# Services created
-kubectl get svc -n smarthome
+            # Services created
+            kubectl get svc -n smarthome
 
-# Check backend logs (frontend → backend connection)
-kubectl logs deployment/smarthome-backend -n smarthome
+            # Check backend logs (frontend → backend connection)
+            kubectl logs deployment/smarthome-backend -n smarthome
 
-# Check backend can reach MongoDB
-kubectl exec -it deployment/smarthome-backend -n smarthome -- wget -q -O- http://localhost:5000/api/health
-```
-
+            # Check backend can reach MongoDB
+            kubectl exec -it deployment/smarthome-backend -n smarthome -- wget -q -O- http://localhost:5000/api/health
+            ```
+            
 ---
 
 ## ✅ SECTION D — SELENIUM AUTOMATED TESTING (5 Marks)
