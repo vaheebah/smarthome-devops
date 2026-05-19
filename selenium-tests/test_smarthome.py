@@ -47,6 +47,7 @@ class TestHomepage(unittest.TestCase):
         # Check page title
         self.assertIn("SmartHome", self.driver.title)
         print("✅ TC1.1 - Page title contains 'SmartHome'")
+        
 
     def test_sidebar_visible(self):
         """Sidebar with navigation should be visible"""
