@@ -19,11 +19,13 @@ BASE_URL = "http://localhost:3000"
 
 def get_driver():
     options = Options()
-    options.add_argument("--headless")       # Remove for visible browser
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1280,800")
-    service = Service(ChromeDriverManager().install())
+
+    service = Service(r"D:\smarthome-devops-project\smarthome\chromedriver.exe")
+
     return webdriver.Chrome(service=service, options=options)
 
 
