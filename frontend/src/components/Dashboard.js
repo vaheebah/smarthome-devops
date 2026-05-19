@@ -28,7 +28,7 @@ export default function Dashboard({
         <div className="sidebar-header">
           <div className="logo">
             <span className="logo-icon">⌂</span>
-            {sidebarOpen && <span className="logo-text mono">NEXUSuseses<span className="logo-accent">HOME</span></span>}
+            {sidebarOpen && <span className="logo-text mono">NEXUS<span className="logo-accent">HOME</span></span>}
           </div>
           <button className="toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? '‹' : '›'}
